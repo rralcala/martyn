@@ -104,6 +104,12 @@ func GetTransacions(sort []string, itemRange []int, filters map[string]interface
 	return transactions
 }
 
+func DeleteTransactions(id []*Transaction) {
+	for _, i := range id {
+		db.Delete(i)
+	}
+}
+
 func AppendTransacions(newtx *Transaction) {
 	transaction := Transaction{
 		Date:         newtx.Date,

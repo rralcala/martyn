@@ -45,10 +45,10 @@ func parseJSONArrayInt(arrayQuery string) []int {
 
 	if len(arrayQuery) > 0 {
 		unmarshaled := json.Unmarshal([]byte(arrayQuery), &sort)
-		if unmarshaled != nil {
-			log.Warning(fmt.Sprintf("Array parameter error: %s", arrayQuery))
-		} else {
+		if unmarshaled == nil {
 			return sort
+		} else {
+			log.Warning(fmt.Sprintf("Array parameter error: %s", arrayQuery))
 		}
 	}
 	return nil
@@ -89,7 +89,31 @@ func getTransactionByID(c *gin.Context) {
 }
 
 func updateTransaction(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "success"})
+	c.JSON(http.StatusNoContent, gin.H{"message": "success"})
+}
+
+func deleteTransactions(c *gin.Context) {
+	if len(c.Param("id")) > 0 {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "id is not int"})
+			return
+		}
+		item := models.Transaction{
+			ID: id,
+		}
+		models.DeleteTransactions([]*models.Transaction{&item})
+	} else if filter := c.Query("filter"); len(filter) > 0 {
+		var items []*models.Transaction
+		for _, id := range parseJSONArrayInt(filter) {
+			items = append(items, &models.Transaction{
+				ID: int64(id),
+			})
+		}
+		models.DeleteTransactions(items)
+
+	}
+	c.JSON(http.StatusNoContent, gin.H{"message": "success"})
 }
 
 // postTransaction adds a transaction from JSON received in the request body.
@@ -119,6 +143,8 @@ func main() {
 	models.ConnectDatabase()
 	router.GET("/transactions", getTransactions)
 	router.POST("/transactions", postTransaction)
+	router.DELETE("/transactions", deleteTransactions)
+	router.DELETE("/transactions/:id", deleteTransactions)
 	router.GET("/transactions/:id", getTransactionByID)
 	router.PUT("/transactions/:id", updateTransaction)
 	router.PATCH("/transactions/:id", updateTransaction)
