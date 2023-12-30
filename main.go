@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,12 +13,61 @@ import (
 )
 
 func getTransactions(c *gin.Context) {
-	transactions := models.GetTransacions()
+
+	sort := parseJSONArray(c.Query("sort"))
+	itemRange := parseJSONArrayInt(c.Query("range"))
+	filter := parseJSONMap(c.Query("filter"))
+	transactions := models.GetTransacions(sort, itemRange, filter)
 	var ret []models.TransactionOutput
 	for _, a := range transactions {
 		ret = append(ret, models.Flatten(&a))
 	}
 	c.IndentedJSON(http.StatusOK, ret)
+}
+
+func parseJSONArray(arrayQuery string) []string {
+	var sort []string
+
+	if len(arrayQuery) > 0 {
+		unmarshaled := json.Unmarshal([]byte(arrayQuery), &sort)
+		if unmarshaled != nil {
+			log.Warning(fmt.Sprintf("Array parameter error: %s", arrayQuery))
+		} else {
+			return sort
+		}
+	}
+	return nil
+
+}
+
+func parseJSONArrayInt(arrayQuery string) []int {
+	var sort []int
+
+	if len(arrayQuery) > 0 {
+		unmarshaled := json.Unmarshal([]byte(arrayQuery), &sort)
+		if unmarshaled != nil {
+			log.Warning(fmt.Sprintf("Array parameter error: %s", arrayQuery))
+		} else {
+			return sort
+		}
+	}
+	return nil
+
+}
+
+func parseJSONMap(sortQuery string) map[string]interface{} {
+	var sort map[string]interface{}
+
+	if len(sortQuery) > 0 {
+		unmarshaled := json.Unmarshal([]byte(sortQuery), &sort)
+		if unmarshaled != nil {
+			log.Error("Map parameter error")
+		} else {
+			return sort
+		}
+	}
+	return nil
+
 }
 
 // getTransactionByID locates the transaction whose ID value matches the id
@@ -35,6 +86,10 @@ func getTransactionByID(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, models.Flatten(transaction))
+}
+
+func updateTransaction(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
 // postTransaction adds a transaction from JSON received in the request body.
@@ -65,5 +120,7 @@ func main() {
 	router.GET("/transactions", getTransactions)
 	router.POST("/transactions", postTransaction)
 	router.GET("/transactions/:id", getTransactionByID)
+	router.PUT("/transactions/:id", updateTransaction)
+	router.PATCH("/transactions/:id", updateTransaction)
 	router.Run("localhost:8080")
 }

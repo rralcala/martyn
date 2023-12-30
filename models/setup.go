@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+var db *gorm.DB
 
 func ConnectDatabase() {
 
@@ -20,5 +20,5 @@ func ConnectDatabase() {
 		return
 	}
 
-	DB = database
+	db = database
 }

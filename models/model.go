@@ -13,7 +13,7 @@ type Provider struct {
 func FindProvider(key int64) *Provider {
 
 	var item Provider
-	if err := DB.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
+	if err := db.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
 		return nil
 	}
 	return &item
@@ -22,7 +22,7 @@ func FindProvider(key int64) *Provider {
 func FindAccount(key int64) *Account {
 
 	var item Account
-	if err := DB.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
+	if err := db.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
 		return nil
 	}
 	return &item
@@ -36,7 +36,7 @@ type CostCenter struct {
 func FindCostCenter(key int64) *CostCenter {
 
 	var item CostCenter
-	if err := DB.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
+	if err := db.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
 		return nil
 	}
 	return &item

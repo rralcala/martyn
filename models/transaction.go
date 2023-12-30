@@ -2,7 +2,9 @@ package models
 
 import (
 	"errors"
+	"strings"
 
+	"github.com/rralcala/martyn/lib/log"
 	"gorm.io/gorm/clause"
 )
 
@@ -83,9 +85,22 @@ func Build(transaction *TransactionInput) (*Transaction, error) {
 
 }
 
-func GetTransacions() []Transaction {
+func GetTransacions(sort []string, itemRange []int, filters map[string]interface{}) []Transaction {
 	var transactions []Transaction
-	DB.Preload(clause.Associations).Find(&transactions)
+	db := db.Preload(clause.Associations)
+	if len(sort) == 2 {
+		log.Info("Will sort")
+		db = db.Order(strings.ToLower(strings.Join(sort[:], " ")))
+	}
+
+	if len(itemRange) == 2 {
+		log.Info("Limited range")
+		db = db.Offset(itemRange[0]).Limit(itemRange[1])
+	}
+	if len(filters) > 0 {
+		db = db.Where(filters)
+	}
+	db.Find(&transactions)
 	return transactions
 }
 
@@ -101,13 +116,13 @@ func AppendTransacions(newtx *Transaction) {
 		AccountID:    newtx.AccountID,
 		Account:      nil,
 	}
-	DB.Create(&transaction)
+	db.Create(&transaction)
 
 }
 
 func GetTransactionByID(id int64) (*Transaction, error) {
 	var transaction Transaction
-	if err := DB.Preload(clause.Associations).Where("id = ?", id).First(&transaction).Error; err != nil {
+	if err := db.Preload(clause.Associations).Where("id = ?", id).First(&transaction).Error; err != nil {
 		return nil, err
 	}
 	return &transaction, nil
