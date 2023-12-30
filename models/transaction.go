@@ -26,11 +26,11 @@ type Transaction struct {
 type TransactionOutput struct {
 	ID          int64  `json:"id"`
 	Date        string `json:"date"`
-	Provider    string `json:"provider"`
+	Provider    int64  `json:"provider"`
 	Description string `json:"description"`
 	Amount      int64  `json:"amount"`
-	CostCenter  string `json:"cost_center"`
-	Account     string `json:"account"`
+	CostCenter  int64  `json:"cost_center"`
+	Account     int64  `json:"account"`
 }
 
 // album represents data about a record album.
@@ -48,11 +48,11 @@ func Flatten(transaction *Transaction) TransactionOutput {
 	return TransactionOutput{
 		ID:          transaction.ID,
 		Date:        transaction.Date,
-		Provider:    transaction.Provider.Name,
+		Provider:    transaction.ProviderID,
 		Description: transaction.Description,
 		Amount:      transaction.Amount,
-		CostCenter:  transaction.CostCenter.Description,
-		Account:     transaction.Account.Description,
+		CostCenter:  transaction.CostCenterID,
+		Account:     transaction.AccountID,
 	}
 
 }
@@ -109,7 +109,11 @@ func DeleteTransactions(id []*Transaction) {
 		db.Delete(i)
 	}
 }
-
+func TotalTransactions() int64 {
+	var count int64
+	db.Model(&Transaction{}).Count(&count)
+	return count
+}
 func AppendTransacions(newtx *Transaction) {
 	transaction := Transaction{
 		Date:         newtx.Date,

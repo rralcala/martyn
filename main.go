@@ -13,7 +13,7 @@ import (
 )
 
 func getTransactions(c *gin.Context) {
-
+	count := models.TotalTransactions()
 	sort := parseJSONArray(c.Query("sort"))
 	itemRange := parseJSONArrayInt(c.Query("range"))
 	filter := parseJSONMap(c.Query("filter"))
@@ -22,6 +22,7 @@ func getTransactions(c *gin.Context) {
 	for _, a := range transactions {
 		ret = append(ret, models.Flatten(&a))
 	}
+	c.Writer.Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	c.IndentedJSON(http.StatusOK, ret)
 }
 
@@ -137,16 +138,33 @@ func postTransaction(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newTransaction)
 }
 
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "X-Total-Count")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func main() {
 	router := gin.Default()
-
+	router.Use(CORSMiddleware())
 	models.ConnectDatabase()
 	router.GET("/transactions", getTransactions)
+	router.GET("/transactions/:id", getTransactionByID)
 	router.POST("/transactions", postTransaction)
 	router.DELETE("/transactions", deleteTransactions)
 	router.DELETE("/transactions/:id", deleteTransactions)
-	router.GET("/transactions/:id", getTransactionByID)
 	router.PUT("/transactions/:id", updateTransaction)
-	router.PATCH("/transactions/:id", updateTransaction)
+	router.PUT("/transactions", updateTransaction)
 	router.Run("localhost:8080")
 }
