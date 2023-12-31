@@ -1,43 +1,10 @@
 package models
 
-type Account struct {
-	ID          int64  `json:"id" gorm:"primaryKey"`
-	Description string `json:"description"`
-}
-
-type Provider struct {
-	ID   int64  `json:"id" gorm:"primaryKey"`
-	Name string `json:"name"`
-}
-
-func FindProvider(key int64) *Provider {
-
-	var item Provider
-	if err := db.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
-		return nil
-	}
-	return &item
-}
-
-func FindAccount(key int64) *Account {
-
-	var item Account
-	if err := db.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
-		return nil
-	}
-	return &item
-}
-
-type CostCenter struct {
-	ID          int64  `json:"id" gorm:"primaryKey"`
-	Description string `json:"description"`
-}
-
-func FindCostCenter(key int64) *CostCenter {
-
-	var item CostCenter
-	if err := db.Model(item).Where("id = ?", key).First(&item).Error; err != nil {
-		return nil
-	}
-	return &item
+type CRUDModel[T any] interface {
+	Create() T
+	GetList() []T
+	GetSingleItem(ID int) T
+	UpdateItem(ID int) T
+	Delete(ID int) bool
+	TotalCount() int64
 }

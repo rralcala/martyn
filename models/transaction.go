@@ -1,12 +1,13 @@
 package models
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/rralcala/martyn/lib/log"
 	"gorm.io/gorm/clause"
 )
+
+type TransactionModel struct{}
 
 // album represents data about a record album.
 type Transaction struct {
@@ -57,35 +58,7 @@ func Flatten(transaction *Transaction) TransactionOutput {
 
 }
 
-func Build(transaction *TransactionInput) (*Transaction, error) {
-	provider := FindProvider(transaction.Provider)
-	if provider == nil {
-		return nil, errors.New("Provider not found")
-	}
-	costCenter := FindCostCenter(transaction.CostCenter)
-	if costCenter == nil {
-		return nil, errors.New("costCenter not found")
-	}
-	account := FindAccount(transaction.Account)
-	if account == nil {
-		return nil, errors.New("account not found")
-	}
-	return &Transaction{
-		ID:           transaction.ID,
-		Date:         transaction.Date,
-		Provider:     provider,
-		ProviderID:   transaction.Provider,
-		Description:  transaction.Description,
-		Amount:       transaction.Amount,
-		CostCenterID: transaction.CostCenter,
-		CostCenter:   costCenter,
-		Account:      account,
-		AccountID:    transaction.Account,
-	}, nil
-
-}
-
-func GetTransacions(sort []string, itemRange []int, filters map[string]interface{}) []Transaction {
+func (*TransactionModel) GetList(sort []string, itemRange []int, filters map[string]interface{}) []Transaction {
 	var transactions []Transaction
 	db := db.Preload(clause.Associations)
 	if len(sort) == 2 {
@@ -104,33 +77,23 @@ func GetTransacions(sort []string, itemRange []int, filters map[string]interface
 	return transactions
 }
 
-func DeleteTransactions(id []*Transaction) {
+func (*TransactionModel) Delete(id []*Transaction) {
 	for _, i := range id {
 		db.Delete(i)
 	}
 }
-func TotalTransactions() int64 {
+
+func (*TransactionModel) TotalCount() int64 {
 	var count int64
 	db.Model(&Transaction{}).Count(&count)
 	return count
 }
-func AppendTransacions(newtx *Transaction) {
-	transaction := Transaction{
-		Date:         newtx.Date,
-		ProviderID:   newtx.ProviderID,
-		Provider:     nil,
-		Description:  newtx.Description,
-		Amount:       newtx.Amount,
-		CostCenterID: newtx.CostCenterID,
-		CostCenter:   nil,
-		AccountID:    newtx.AccountID,
-		Account:      nil,
-	}
-	db.Create(&transaction)
 
+func (*TransactionModel) Create(newtx *Transaction) {
+	db.Create(newtx)
 }
 
-func GetTransactionByID(id int64) (*Transaction, error) {
+func (*TransactionModel) GetSingleItem(id int64) (*Transaction, error) {
 	var transaction Transaction
 	if err := db.Preload(clause.Associations).Where("id = ?", id).First(&transaction).Error; err != nil {
 		return nil, err
