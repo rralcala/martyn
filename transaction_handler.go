@@ -14,8 +14,23 @@ func getTransactions(c *gin.Context) {
 	source := models.TransactionModel{}
 
 	count := source.TotalCount()
-	sort := parseJSONArray(c.Query("sort"))
-	itemRange := parseJSONArrayInt(c.Query("range"))
+	sortSelection := c.Query("sort")
+	sort := parseJSONArray(sortSelection)
+	var itemRange []int
+	if len(c.Query("_start")) > 0 {
+		start, err := strconv.Atoi(c.Query("_start"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "start is not int"})
+		}
+		end, err := strconv.Atoi(c.Query("_end"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "end is not int"})
+		}
+		itemRange = []int{start, end}
+	} else {
+		itemRange = parseJSONArrayInt(c.Query("range"))
+	}
+
 	filter := parseJSONMap(c.Query("filter"))
 	transactions := source.GetList(sort, itemRange, filter)
 	ret := []models.TransactionOutput{}
@@ -69,6 +84,7 @@ func deleteTransactions(c *gin.Context) {
 				ID: int64(id),
 			})
 		}
+
 		source.Delete(items)
 
 	}
