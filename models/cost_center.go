@@ -40,11 +40,13 @@ func (*CostCenterModel) Delete(id []*CostCenter) {
 }
 
 func (*CostCenterModel) GetList(sort []string, itemRange []int, filters map[string]interface{}) []CostCenter {
-	var items []CostCenter
+	items := []CostCenter{}
 	db := db.Preload(clause.Associations)
 	if len(sort) == 2 {
 		log.Info("Will sort")
 		db = db.Order(strings.ToLower(strings.Join(sort[:], " ")))
+	} else {
+		db = db.Order("description")
 	}
 
 	if len(itemRange) == 2 {

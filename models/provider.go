@@ -40,11 +40,13 @@ func (*ProviderModel) Delete(id []*Provider) {
 }
 
 func (*ProviderModel) GetList(sort []string, itemRange []int, filters map[string]interface{}) []Provider {
-	var items []Provider
+	items := []Provider{}
 	db := db.Preload(clause.Associations)
 	if len(sort) == 2 {
 		log.Info("Will sort")
 		db = db.Order(strings.ToLower(strings.Join(sort[:], " ")))
+	} else {
+		db = db.Order("name")
 	}
 
 	if len(itemRange) == 2 {

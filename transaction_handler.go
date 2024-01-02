@@ -3,8 +3,10 @@ package main
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rralcala/martyn/lib/log"
 	"github.com/rralcala/martyn/models"
 )
 
@@ -16,7 +18,7 @@ func getTransactions(c *gin.Context) {
 	itemRange := parseJSONArrayInt(c.Query("range"))
 	filter := parseJSONMap(c.Query("filter"))
 	transactions := source.GetList(sort, itemRange, filter)
-	var ret []models.TransactionOutput
+	ret := []models.TransactionOutput{}
 	for _, a := range transactions {
 		ret = append(ret, models.Flatten(&a))
 	}
@@ -77,15 +79,34 @@ func deleteTransactions(c *gin.Context) {
 func postTransaction(c *gin.Context) {
 	source := new(models.TransactionModel)
 
-	var newTransaction models.Transaction
+	var newTransaction models.TransactionInput
 
 	// Call BindJSON to bind the received JSON to
 	// newTransaction.
 	if err := c.BindJSON(&newTransaction); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-
-	source.Create(&newTransaction)
-
+	createdOn, _ := time.Parse("2006-01-02", newTransaction.Date)
+	paraguay, err := time.LoadLocation("America/Asuncion")
+	if err != nil {
+		log.Error("Timezone not found.")
+		c.JSON(http.StatusForbidden, gin.H{"message": "Timezone not found."})
+	}
+	createdOn = createdOn.In(paraguay)
+	newTx := models.Transaction{
+		Date:         createdOn.Format(time.RFC3339),
+		ProviderID:   newTransaction.Provider,
+		Provider:     nil,
+		Description:  newTransaction.Description,
+		Amount:       newTransaction.Amount,
+		CostCenterID: newTransaction.CostCenter,
+		CostCenter:   nil,
+		AccountID:    newTransaction.Account,
+		Account:      nil,
+	}
+	source.Create(&newTx)
+	newTransaction.ID = newTx.ID
+	newTransaction.Date = newTx.Date
 	c.IndentedJSON(http.StatusCreated, newTransaction)
 }

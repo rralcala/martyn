@@ -40,11 +40,13 @@ func (*AccountModel) Delete(id []*Account) {
 }
 
 func (*AccountModel) GetList(sort []string, itemRange []int, filters map[string]interface{}) []Account {
-	var items []Account
+	items := []Account{}
 	db := db.Preload(clause.Associations)
 	if len(sort) == 2 {
 		log.Info("Will sort")
 		db = db.Order(strings.ToLower(strings.Join(sort[:], " ")))
+	} else {
+		db = db.Order("description")
 	}
 
 	if len(itemRange) == 2 {

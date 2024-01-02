@@ -64,6 +64,8 @@ func (*TransactionModel) GetList(sort []string, itemRange []int, filters map[str
 	if len(sort) == 2 {
 		log.Info("Will sort")
 		db = db.Order(strings.ToLower(strings.Join(sort[:], " ")))
+	} else {
+		db = db.Order("date DESC")
 	}
 
 	if len(itemRange) == 2 {
